@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name PICAXE)(type Legacy)(uri ${KIPRJMOD}/PICAXE.lib)(options "")(descr ""))
+)
