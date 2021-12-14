@@ -39,6 +39,23 @@ symbol Green_LED = 1
 
 dirs = %00000011
 
+testpot:
+let b0 = pins & %101000
+if b0 = 0 then goto testpot
+
+b1 = 0						
+w4 = time + 2
+debounce1:						
+	readadc 4,b0 
+	if b0 > b1 then
+		b1 = b0
+	end if
+  if time < w4 then goto debounce1
+
+	read b1,b0	; read value into b0 from table using b1 as index
+  sertxd("Raw value:",#b1,", Intervals:", #b0, 13,10)
+goto testpot
+
 for b0 = 0 to 100	' allow time for a new program download
   pause 100
 next b0	
@@ -51,7 +68,7 @@ bit0 = 0           ' turn off the ADC module to save power
 poke ADCON0, b0
 
 ' log lookup for the potentiometer: six minute intervals (i.e. 10 = 1 hour, 240 = 24 hours)
-eeprom 0,(10,10,10,10,11,11,11,11,11,11,11,11,12,12,12,12,12,12,13,13,13,13,13,13,13,14,14,14,14,14,15,15,15,15,15,15,16,16,16,16,16,17,17,17,17,18,18,18,18,18,19,19,19,19,20,20,20,20,21,21,21,21,22,22,22,22,23,23,23,24,24,24,25,25,25,25,26,26,26,27,27,27,28,28,28,29,29,30,30,30,31,31,31,32,32,33,33,33,34,34,35,35,36,36,37,37,37,38,38,39,39,40,40,41,41,42,42,43,44,44,45,45,46,46,47,47,48,49,49,50,51,51,52,52,53,54,54,55,56,57,57,58,59,59,60,61,62,62,63,64,65,66,66,67,68,69,70,71,72,73,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,89,90,91,92,93,94,95,97,98,99,100,102,103,104,105,107,108,109,111,112,114,115,116,118,119,121,122,124,126,127,129,130,132,134,135,137,139,140,142,144,146,148,149,151,153,155,157,159,161,163,165,167,169,171,174,176,178,180,182,185,187,189,192,194,197,199,202,204,207,209,212,215,217,220,223,226,228,231,234,237,240)	
+eeprom 0,(10,10,11,11,11,12,12,12,13,13,13,14,14,14,15,15,16,16,16,17,17,17,18,18,18,19,19,19,20,20,20,21,21,22,22,22,23,23,24,24,24,25,25,26,26,27,27,27,28,28,29,29,29,30,30,31,31,31,32,32,33,33,33,34,34,35,35,36,36,36,37,37,38,38,38,39,39,40,40,41,42,43,44,45,46,47,47,48,49,50,51,52,53,54,55,56,57,58,59,60,60,61,62,63,64,65,66,67,68,69,70,71,72,73,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,121,122,123,123,124,124,125,126,126,127,128,128,129,130,130,131,131,132,133,133,134,135,135,136,137,137,138,138,139,140,140,141,142,142,143,143,144,145,145,146,147,147,148,149,149,150,150,151,152,152,153,154,154,155,156,156,157,157,158,159,159,160,163,166,169,172,175,178,181,184,187,190,193,196,199,201,204,207,210,213,216,219,222,225,228,231,234,237,240,243,246,249)
 
 b1 = 0
 
@@ -95,22 +112,27 @@ if time >= w4 then goto timeouterror
 if w0 < 1000 then goto waitlow
 
 waithigh:
-if time >= w4 then goto timeouterror
-if pinC.2 = 0 then goto waithigh
-low C.1
+	if time >= w4 then goto timeouterror
+	if pinC.2 = 0 then goto waithigh
+	low C.1
 
-b1 = 0 ' unlocked
+	b1 = 0 ' unlocked
 return
 
-timeouterror: ' do nothing; if user presses a button, give a long LED blink.
-low C.0
-low C.1
-nap 2 '72 ms
-let b0 = pins & %101000
-if b0 = 0 then goto timeouterror
-high C.0
-sleep 5
-low C.0
+timeouterror: ' do nothing; if user presses a button, give a long LED blink, then run the motor until they release it.
+	low C.0
+	low C.1
+	nap 2 '72 ms
+	let b0 = pins & %101000
+	if b0 = 0 then goto timeouterror
+	high C.0
+	sleep 5
+	low C.0
+	high C.1
+
+runmotorwhilepressed:
+	let b0 = pins & %101000
+	if b0 <> 0 then goto runmotorwhilepressed
 goto timeouterror
 
 openbutton: ' if not locked: open latch, otherwise blink the number of remaining hours
@@ -129,10 +151,16 @@ return
 
 lockbutton: ' read the lock time: convert log scale (powers of 2 from 1 hr to 24 h)
 						' if already locked: extend the lock time if new time is longer
-readadc 4,b0 ' pre-read to stabilise -required?
-readadc 4,b0 '
+b1 = 0						
+w4 = time + 2
+debounce:						
+	readadc 4,b0 
+	if b0 > b1 then
+		b1 = b0
+	end if
+  if time < w4 then goto debounce
 
-read b0,b1	; read value from table
+read b1,b0	; read value into b0 from table using b1 as index
 w2 = b0 * 6 ' convert from 6-minute intervals to 1-minute intervals
 w3 = 0	
 b1 = 1			' locked
