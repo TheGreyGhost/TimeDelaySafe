@@ -11,7 +11,7 @@ Low-power features
 
 This project uses several techniques suggested in previous posts to reduce power while running on batteries.
 
-1. Run at slower speed. Poke the OSCCON register ("poke $8f,%00000000") to run at 31.250kHz instead of 4mHz (1/128th the speed). See "08M UNDER clocking"-- http://www.picaxeforum.co.uk/showthread.php?t=2233 ; also http://www.kranenborg.org/ee/picaxe/ (search for low-power) also search the forum for "OSCCON".
+#not used# 1. Run at slower speed. Poke the OSCCON register ("poke $8f,%00000000") to run at 31.250kHz instead of 4mHz (1/128th the speed). See "08M UNDER clocking"-- http://www.picaxeforum.co.uk/showthread.php?t=2233 ; also http://www.kranenborg.org/ee/picaxe/ (search for low-power) also search the forum for "OSCCON".
 
 2. Run DISABLEBOD. This turns off the picaxe brown-out detection, which cause the picaxe to shut itself off at a bit below 3V. With DISABLEBOD, picaxes have been kept alive down to 1.3V. See manuka, et. al.: http://www.picaxeforum.co.uk/showthread.php?t=6513 ; also Mycroft2152, "Low Power PICAXE 08M - BOD" -- http://www.picaxeforum.co.uk/showthread.php?t=4826
 
